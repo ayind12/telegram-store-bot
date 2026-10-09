@@ -1,3 +1,4 @@
+import os
 import logging
 import requests
 from telegram import Update
@@ -9,9 +10,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Configuration - Replace with your actual tokens
-BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN_HERE'
-API_KEY = 'YOUR_PROD_SELLER_API_KEY_HERE'
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+API_KEY = os.getenv('API_KEY')
 BASE_URL = 'https://prodseller.com/v1'
 HEADERS = {'X-Api-Key': API_KEY}
 
@@ -26,12 +26,12 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not args:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Usage: /buy <product_id>"
+            text='Usage: /buy <product_id>'
         )
         return
 
     product_id = args[0]
-    
+
     # Simulate API call to create an order
     try:
         response = requests.post(
@@ -41,7 +41,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         order = response.json()
 
-        if "error" in order:
+        if 'error' in order:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
                 text=f"Error: {order['error']}"
@@ -60,11 +60,11 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
-    
+
     start_handler = CommandHandler('start', start)
     buy_handler = CommandHandler('buy', buy)
-    
+
     application.add_handler(start_handler)
     application.add_handler(buy_handler)
-    
+
     application.run_polling()
