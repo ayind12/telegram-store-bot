@@ -1,8 +1,8 @@
 import os
 import logging
 import requests
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
 
 # Set up logging
 logging.basicConfig(
@@ -16,10 +16,26 @@ BASE_URL = 'https://prodseller.com/v1'
 HEADERS = {'X-Api-Key': API_KEY}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("View Products", callback_data='view_products')],
+        [InlineKeyboardButton("Check Order", callback_data='check_order')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="Welcome to the Reseller Bot! Use /buy <product_id> to purchase."
+        text="Welcome to the Reseller Bot! Please choose an option:",
+        reply_markup=reply_markup
     )
+
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'view_products':
+        await query.edit_message_text(text="Here are the available products. Use /buy <product_id> to purchase.")
+    elif query.data == 'check_order':
+        await query.edit_message_text(text="Please provide your order ID to check the status.")
 
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -61,10 +77,8 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    start_handler = CommandHandler('start', start)
-    buy_handler = CommandHandler('buy', buy)
-
-    application.add_handler(start_handler)
-    application.add_handler(buy_handler)
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('buy', buy))
+    application.add_handler(CallbackQueryHandler(button_click))
 
     application.run_polling()
